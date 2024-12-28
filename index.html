@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Free Will Synthesis Survey - A research survey about beliefs in free will, determinism, and related concepts">
-    <title>Free Will Synthesis Survey</title>
+    <title>Free Will Synthesis Survey - Exploring Beliefs About Choice, Determinism & Human Agency</title>
     <style>
         :root {
             /* Light theme - Solarized Tokyo Day */
@@ -1571,35 +1571,23 @@
             
             // Add new selection
             selectedOption.classList.add('selected');
-            questionDiv.classList.add('answered');
+            
+            // Only add answered class if not already present
+            if (!questionDiv.classList.contains('answered')) {
+                questionDiv.classList.add('answered');
+            }
             
             // Store the answer
             const responses = getStoredResponses();
             responses[questionId] = value;
             localStorage.setItem('current_responses', JSON.stringify(responses));
             
+            // Update progress indicators
+            updateProgress();
+            updateProgressSummary();
+            
             // Highlight next unanswered question
             highlightNextUnanswered();
-            
-            // Update progress
-            updateProgress();
-            updateProgressSummary(); // Add this line to update the progress bubble
-            
-            // Add error pulse to unanswered questions
-            document.querySelectorAll('.question:not(.answered)').forEach(q => {
-                q.classList.add('error-pulse');
-                
-                // Add tooltip if not exists
-                if (!q.querySelector('.question-tooltip')) {
-                    const tooltip = document.createElement('div');
-                    tooltip.className = 'question-tooltip';
-                    tooltip.textContent = 'This question needs an answer';
-                    q.appendChild(tooltip);
-                }
-            });
-
-            // Update validation status
-            updateValidationStatus();
         }
 
         function getStoredResponses() {
@@ -1810,11 +1798,8 @@
                 progressBar.style.width = '0%';
             }
 
-            // Reset fieldset progress
-            document.querySelectorAll('.fieldset-progress').forEach(progress => {
-                const total = progress.closest('fieldset').querySelectorAll('.question').length;
-                progress.querySelector('.progress-indicator span').textContent = `0/${total}`;
-            });
+            // Reset progress summary
+            updateProgressSummary();
 
             // Clear stored responses
             localStorage.removeItem('current_responses');
@@ -1822,17 +1807,8 @@
             // Reset timer if needed
             resetTimer();
 
-            // Clear any error messages
-            const errorMessage = document.getElementById('error-message');
-            if (errorMessage) {
-                errorMessage.style.display = 'none';
-            }
-
-            // Remove any existing alerts
-            document.querySelectorAll('.alert').forEach(alert => alert.remove());
-
             // Show success message
-            showPopupAlert('Form cleared successfully', 'success');
+            showPopupAlert('Form cleared successfully');
 
             // Re-enable submit button if it was disabled
             const submitButton = document.querySelector('button[type="submit"]');
@@ -1939,18 +1915,17 @@
         }
 
         function updateProgressSummary() {
-            const totalQuestions = 17; // Total number of questions in the survey
-            const responses = getStoredResponses();
-            const answered = Object.keys(responses).length;
+            const totalQuestions = document.querySelectorAll('.question').length;
+            const answeredQuestions = document.querySelectorAll('.question.answered').length;
             
             // Update progress count in summary bubble
             const progressCount = document.querySelector('.progress-summary .progress-count');
             if (progressCount) {
-                progressCount.textContent = `${answered}/${totalQuestions}`;
+                progressCount.textContent = `${answeredQuestions}/${totalQuestions}`;
             }
 
             // Add progress percentage and update bubble style
-            const progressPercentage = (answered / totalQuestions) * 100;
+            const progressPercentage = (answeredQuestions / totalQuestions) * 100;
             const progressSummary = document.querySelector('.progress-summary');
             if (progressSummary) {
                 // Update progress indicator color based on completion
@@ -2348,10 +2323,10 @@
                 </div>
 
                 <div class="results-actions">
-                    <button id="download-results" class="action-button">
+                    <button id="download-results" class="action-button" type="button">
                         Download Results
                     </button>
-                    <button id="share-results" class="action-button">
+                    <button id="share-results" class="action-button" type="button">
                         Share Results
                     </button>
                 </div>
