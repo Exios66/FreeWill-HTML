@@ -242,6 +242,50 @@
             opacity: 0.6;
             cursor: not-allowed;
         }
+
+        .popup-alert {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: var(--error-color);
+            color: white;
+            padding: 1.5rem 3rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px var(--shadow-color);
+            z-index: 1000;
+            animation: fadeInOut 0.5s ease-in-out;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+        }
+
+        .timer {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            background-color: var(--bg-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px var(--shadow-color);
+            font-family: monospace;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            z-index: 100;
+        }
+
+        @media (max-width: 600px) {
+            .timer {
+                position: static;
+                margin: 1rem auto;
+                width: fit-content;
+            }
+        }
     </style>
     <link rel="stylesheet" href="styles.css">
     <script src="scripts.js" defer></script>
@@ -280,6 +324,7 @@
                 calculateScores(responses);
                 return true;
             } else {
+                showPopupAlert('Please answer all questions before submitting');
                 document.getElementById('error-message').style.display = 'block';
                 return false;
             }
@@ -379,28 +424,156 @@
             logDebug('Results displayed to user');
         }
 
+        // Local Storage Keys
+        const STORAGE_KEYS = {
+            RESPONSES: 'survey_responses',
+            STATS: 'survey_stats'
+        };
+
+        // Initialize storage if not exists
+        function initializeStorage() {
+            if (!localStorage.getItem(STORAGE_KEYS.RESPONSES)) {
+                localStorage.setItem(STORAGE_KEYS.RESPONSES, JSON.stringify([]));
+            }
+            if (!localStorage.getItem(STORAGE_KEYS.STATS)) {
+                localStorage.setItem(STORAGE_KEYS.STATS, JSON.stringify({
+                    totalResponses: 0,
+                    averageScores: {},
+                    lastResponse: null
+                }));
+            }
+            logDebug('Storage initialized');
+        }
+
+        // Save response to local storage
+        function saveResponse(data) {
+            try {
+                // Get existing responses
+                const responses = JSON.parse(localStorage.getItem(STORAGE_KEYS.RESPONSES) || '[]');
+                
+                // Add new response
+                responses.push({
+                    id: responses.length + 1,
+                    ...data,
+                    timestamp: new Date().toISOString()
+                });
+
+                // Save updated responses
+                localStorage.setItem(STORAGE_KEYS.RESPONSES, JSON.stringify(responses));
+                
+                // Update stats
+                updateStats(responses);
+                
+                // Export to CSV
+                exportToCSV(responses);
+                
+                logDebug('Response saved successfully');
+                return true;
+            } catch (error) {
+                logDebug('Error saving response:', error);
+                return false;
+            }
+        }
+
+        // Update statistics
+        function updateStats(responses) {
+            const stats = {
+                totalResponses: responses.length,
+                averageScores: calculateAverageScores(responses),
+                lastResponse: responses[responses.length - 1]?.timestamp
+            };
+            localStorage.setItem(STORAGE_KEYS.STATS, JSON.stringify(stats));
+            logDebug('Stats updated');
+        }
+
+        // Calculate average scores
+        function calculateAverageScores(responses) {
+            const totals = {};
+            const counts = {};
+
+            responses.forEach(response => {
+                Object.entries(response.scores).forEach(([key, value]) => {
+                    totals[key] = (totals[key] || 0) + parseFloat(value);
+                    counts[key] = (counts[key] || 0) + 1;
+                });
+            });
+
+            const averages = {};
+            Object.keys(totals).forEach(key => {
+                averages[key] = (totals[key] / counts[key]).toFixed(2);
+            });
+
+            return averages;
+        }
+
+        // Export to CSV
+        function exportToCSV(responses) {
+            try {
+                // Prepare CSV headers
+                const headers = [
+                    'id',
+                    'timestamp',
+                    ...Object.keys(responses[0]?.responses || {}).map(q => `response_${q}`),
+                    ...Object.keys(responses[0]?.scores || {}).map(s => `score_${s}`),
+                    'completionTime',
+                    'userAgent',
+                    'language'
+                ];
+
+                // Prepare CSV rows
+                const rows = responses.map(r => [
+                    r.id,
+                    r.timestamp,
+                    ...Object.values(r.responses),
+                    ...Object.values(r.scores),
+                    r.metadata.completionTimeFormatted,
+                    r.metadata.userAgent,
+                    r.metadata.language
+                ]);
+
+                // Create CSV content
+                const csvContent = [
+                    headers.join(','),
+                    ...rows.map(row => row.join(','))
+                ].join('\n');
+
+                // Create download link
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `survey_responses_${new Date().toISOString()}.csv`;
+                
+                // Trigger download
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                logDebug('CSV exported successfully');
+            } catch (error) {
+                logDebug('Error exporting CSV:', error);
+            }
+        }
+
+        // Update the existing submitToBackend function
         async function submitToBackend(data) {
+            const currentTime = new Date();
+            const elapsedMilliseconds = currentTime - startTime;
+            data.metadata.completionTimeMs = elapsedMilliseconds;
+            data.metadata.completionTimeFormatted = `${Math.floor(elapsedMilliseconds/60000)}:${((elapsedMilliseconds%60000)/1000).toFixed(0).padStart(2,'0')}`;
+
             try {
                 // Show loading state
                 const submitButton = document.querySelector('button[type="submit"]');
                 submitButton.disabled = true;
                 submitButton.textContent = 'Submitting...';
 
-                const response = await fetch('/api/survey/submit', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data)
-                });
+                // Save to local storage instead of sending to server
+                const saved = saveResponse(data);
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                if (!saved) {
+                    throw new Error('Failed to save response');
                 }
 
-                const result = await response.json();
-                logDebug('Survey submitted successfully:', result);
-                
                 // Display results to user
                 displayResults(data.scores, data.interpretations);
                 
@@ -410,12 +583,32 @@
                 // Disable form submission
                 document.getElementById('survey-form').querySelector('button[type="submit"]').disabled = true;
 
+                // Add download button for individual response
+                addDownloadButton(data);
+
             } catch (error) {
                 logDebug('Error submitting survey:', error);
                 showAlert('There was an error submitting your survey. Please try again later.', 'error');
                 submitButton.disabled = false;
                 submitButton.textContent = 'Submit Survey';
             }
+        }
+
+        // Add download button for individual response
+        function addDownloadButton(data) {
+            const downloadButton = document.createElement('button');
+            downloadButton.textContent = 'Download Your Response';
+            downloadButton.className = 'download-button';
+            downloadButton.onclick = () => {
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `survey_response_${new Date().toISOString()}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+            document.getElementById('results').appendChild(downloadButton);
         }
 
         function showAlert(message, type = 'error') {
@@ -464,10 +657,63 @@
             logDebug('Survey initialized');
             document.getElementById('survey-form').addEventListener('submit', validateForm);
         });
+
+        function showPopupAlert(message) {
+            // Remove any existing popup
+            const existingPopup = document.querySelector('.popup-alert');
+            if (existingPopup) {
+                existingPopup.remove();
+            }
+
+            // Create and show new popup
+            const popup = document.createElement('div');
+            popup.className = 'popup-alert';
+            popup.textContent = message;
+            document.body.appendChild(popup);
+
+            // Remove popup after animation
+            setTimeout(() => {
+                popup.remove();
+            }, 500);
+        }
+
+        // Timer functionality
+        let startTime;
+        let timerInterval;
+
+        function startTimer() {
+            startTime = new Date();
+            const timerElement = document.createElement('div');
+            timerElement.className = 'timer';
+            timerElement.id = 'survey-timer';
+            document.body.appendChild(timerElement);
+
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function updateTimer() {
+            const currentTime = new Date();
+            const elapsedTime = new Date(currentTime - startTime);
+            const minutes = elapsedTime.getMinutes().toString().padStart(2, '0');
+            const seconds = elapsedTime.getSeconds().toString().padStart(2, '0');
+            
+            const timerElement = document.getElementById('survey-timer');
+            if (timerElement) {
+                timerElement.textContent = `Time: ${minutes}:${seconds}`;
+            }
+        }
+
+        // Initialize timer when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeStorage();
+            startTimer();
+            // ... rest of the existing initialization code ...
+        });
     </script>
 </head>
 <body>
     <header>
+        <!-- Timer will be inserted here by JavaScript -->
         <div class="theme-switch">
             <button type="button" onclick="toggleTheme()" aria-label="Toggle theme">
                 🌓
