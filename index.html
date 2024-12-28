@@ -7,41 +7,51 @@
     <title>Free Will Synthesis Survey</title>
     <style>
         :root {
-            /* Light theme variables */
-            --bg-primary: #ffffff;
-            --bg-secondary: #f8f9fa;
-            --text-primary: #2d3436;
-            --text-secondary: #636e72;
-            --accent-color: #0984e3;
-            --border-color: #dfe6e9;
-            --error-color: #d63031;
-            --success-color: #00b894;
+            /* Light theme - Solarized Tokyo Day */
+            --bg-primary: #f0f1f5;
+            --bg-secondary: #e5e7eb;
+            --text-primary: #1a1b26;
+            --text-secondary: #4c505e;
+            --accent-color: #7aa2f7;
+            --accent-hover: #5d7ce6;
+            --border-color: #9699a3;
+            --error-color: #f7768e;
+            --success-color: #9ece6a;
+            --warning-color: #e0af68;
+            --info-color: #2ac3de;
             --fieldset-bg: #ffffff;
             --select-bg: #ffffff;
-            --select-border: #b2bec3;
-            --button-bg: #0984e3;
+            --select-border: #c0caf5;
+            --button-bg: #7aa2f7;
             --button-text: #ffffff;
-            --button-hover: #0870c0;
-            --shadow-color: rgba(0, 0, 0, 0.1);
+            --button-hover: #5d7ce6;
+            --shadow-color: rgba(26, 27, 38, 0.1);
+            --highlight-color: rgba(122, 162, 247, 0.1);
+            --validation-bg: rgba(122, 162, 247, 0.05);
         }
 
         [data-theme="dark"] {
-            /* Dark theme variables */
-            --bg-primary: #2d3436;
-            --bg-secondary: #222831;
-            --text-primary: #f5f6fa;
-            --text-secondary: #dcdde1;
-            --accent-color: #00a8ff;
-            --border-color: #4a4f54;
-            --error-color: #ff6b6b;
-            --success-color: #1dd1a1;
-            --fieldset-bg: #353b48;
-            --select-bg: #2d3436;
-            --select-border: #576574;
-            --button-bg: #00a8ff;
-            --button-text: #ffffff;
-            --button-hover: #0097e6;
+            /* Dark theme - Tokyo Night */
+            --bg-primary: #1a1b26;
+            --bg-secondary: #24283b;
+            --text-primary: #c0caf5;
+            --text-secondary: #9aa5ce;
+            --accent-color: #7aa2f7;
+            --accent-hover: #89b4fa;
+            --border-color: #414868;
+            --error-color: #f7768e;
+            --success-color: #9ece6a;
+            --warning-color: #e0af68;
+            --info-color: #2ac3de;
+            --fieldset-bg: #1f2335;
+            --select-bg: #24283b;
+            --select-border: #414868;
+            --button-bg: #7aa2f7;
+            --button-text: #1a1b26;
+            --button-hover: #89b4fa;
             --shadow-color: rgba(0, 0, 0, 0.3);
+            --highlight-color: rgba(122, 162, 247, 0.1);
+            --validation-bg: rgba(122, 162, 247, 0.05);
         }
 
         * {
@@ -812,6 +822,193 @@
         .error-summary i {
             font-size: 1.5rem;
         }
+
+        .error-pulse {
+            animation: errorPulse 2s infinite;
+        }
+
+        @keyframes errorPulse {
+            0% { box-shadow: 0 0 0 0 rgba(214, 48, 49, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(214, 48, 49, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(214, 48, 49, 0); }
+        }
+
+        .validation-status {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--bg-secondary);
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px var(--shadow-color);
+            z-index: 99;
+            transition: all 0.3s ease;
+        }
+
+        .validation-status.hidden {
+            transform: translateY(-50%) translateX(120%);
+        }
+
+        .validation-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .validation-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .validation-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        .validation-item.valid i {
+            color: var(--success-color);
+        }
+
+        .validation-item.invalid i {
+            color: var(--error-color);
+        }
+
+        .question-tooltip {
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--error-color);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .question.unanswered:hover .question-tooltip {
+            opacity: 1;
+            right: -5px;
+        }
+
+        .progress-summary {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            box-shadow: 0 2px 8px var(--shadow-color);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            z-index: 98;
+        }
+
+        .progress-pill {
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .validation-badge {
+            position: absolute;
+            right: -10px;
+            top: -10px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+
+        .question.answered .validation-badge {
+            background: var(--success-color);
+            border-color: var(--success-color);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .validation-pulse {
+            animation: validationPulse 2s infinite;
+        }
+
+        @keyframes validationPulse {
+            0% { box-shadow: 0 0 0 0 var(--highlight-color); }
+            70% { box-shadow: 0 0 0 10px transparent; }
+            100% { box-shadow: 0 0 0 0 transparent; }
+        }
+
+        .validation-progress {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--validation-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px var(--shadow-color);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+
+        .validation-category {
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .validation-category:hover {
+            background: var(--highlight-color);
+        }
+
+        .validation-category.complete {
+            border-left: 3px solid var(--success-color);
+        }
+
+        .validation-category.incomplete {
+            border-left: 3px solid var(--warning-color);
+        }
+
+        .validation-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+            font-size: 12px;
+        }
+
+        .validation-icon.success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .validation-icon.warning {
+            background: var(--warning-color);
+            color: white;
+        }
     </style>
     <link rel="stylesheet" href="styles.css">
     <script src="scripts.js" defer></script>
@@ -1339,6 +1536,22 @@
             
             // Update progress
             updateProgress();
+
+            // Add error pulse to unanswered questions
+            document.querySelectorAll('.question:not(.answered)').forEach(q => {
+                q.classList.add('error-pulse');
+                
+                // Add tooltip if not exists
+                if (!q.querySelector('.question-tooltip')) {
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'question-tooltip';
+                    tooltip.textContent = 'This question needs an answer';
+                    q.appendChild(tooltip);
+                }
+            });
+
+            // Update validation status
+            updateValidationStatus();
         }
 
         function getStoredResponses() {
@@ -1605,6 +1818,143 @@
             }
         }
 
+        function initializeValidationStatus() {
+            const status = document.createElement('div');
+            status.className = 'validation-status hidden';
+            status.innerHTML = `
+                <h4>Survey Progress</h4>
+                <ul class="validation-list">
+                    <li class="validation-item" data-check="all-questions">
+                        <i class="fas fa-check-circle"></i>
+                        All questions answered
+                    </li>
+                    <li class="validation-item" data-check="philosophical">
+                        <i class="fas fa-check-circle"></i>
+                        Philosophical Concepts
+                    </li>
+                    <li class="validation-item" data-check="free-will">
+                        <i class="fas fa-check-circle"></i>
+                        Free Will Beliefs
+                    </li>
+                    <li class="validation-item" data-check="determinism">
+                        <i class="fas fa-check-circle"></i>
+                        Determinism
+                    </li>
+                    <li class="validation-item" data-check="randomness">
+                        <i class="fas fa-check-circle"></i>
+                        Randomness
+                    </li>
+                </ul>
+            `;
+            document.body.appendChild(status);
+            
+            // Show validation status after 2 seconds
+            setTimeout(() => status.classList.remove('hidden'), 2000);
+        }
+
+        function updateValidationStatus() {
+            const sections = {
+                'philosophical': ['q1', 'q2'],
+                'free-will': ['q3', 'q4', 'q5', 'q6', 'q7', 'q8', 'q9'],
+                'determinism': ['q10', 'q11'],
+                'randomness': ['q12', 'q13', 'q14', 'q15', 'q16', 'q17']
+            };
+
+            const responses = getStoredResponses();
+            
+            // Update section status
+            Object.entries(sections).forEach(([section, questions]) => {
+                const isComplete = questions.every(q => responses[q]);
+                const item = document.querySelector(`[data-check="${section}"]`);
+                if (item) {
+                    item.classList.toggle('valid', isComplete);
+                    item.classList.toggle('invalid', !isComplete);
+                    item.querySelector('i').className = isComplete ? 
+                        'fas fa-check-circle' : 'fas fa-exclamation-circle';
+                }
+            });
+
+            // Update overall status
+            const allComplete = Object.values(sections)
+                .flat()
+                .every(q => responses[q]);
+            const allItem = document.querySelector('[data-check="all-questions"]');
+            if (allItem) {
+                allItem.classList.toggle('valid', allComplete);
+                allItem.classList.toggle('invalid', !allComplete);
+                allItem.querySelector('i').className = allComplete ?
+                    'fas fa-check-circle' : 'fas fa-exclamation-circle';
+            }
+
+            // Update progress summary
+            updateProgressSummary();
+        }
+
+        function initializeProgressSummary() {
+            const summary = document.createElement('div');
+            summary.className = 'progress-summary';
+            summary.innerHTML = `
+                <div class="progress-pill">
+                    <i class="fas fa-tasks"></i>
+                    <span class="progress-count">0/17</span>
+                </div>
+                <div class="progress-pill">
+                    <i class="fas fa-clock"></i>
+                    <span class="elapsed-time">00:00</span>
+                </div>
+            `;
+            document.body.appendChild(summary);
+        }
+
+        function updateProgressSummary() {
+            const responses = getStoredResponses();
+            const answered = Object.keys(responses).length;
+            const progressCount = document.querySelector('.progress-count');
+            if (progressCount) {
+                progressCount.textContent = `${answered}/17`;
+            }
+        }
+
+        function enhanceValidation() {
+            // Add validation badges to questions
+            document.querySelectorAll('.question').forEach((question, index) => {
+                const badge = document.createElement('div');
+                badge.className = 'validation-badge';
+                badge.innerHTML = `<i class="fas fa-check"></i>`;
+                question.style.position = 'relative';
+                question.appendChild(badge);
+            });
+
+            // Update validation status with animations
+            function updateValidationStatus() {
+                const categories = document.querySelectorAll('.validation-category');
+                categories.forEach(category => {
+                    const isComplete = category.classList.contains('complete');
+                    if (isComplete) {
+                        category.classList.add('validation-pulse');
+                        setTimeout(() => category.classList.remove('validation-pulse'), 2000);
+                    }
+                });
+            }
+
+            // Add hover tooltips for validation categories
+            document.querySelectorAll('.validation-category').forEach(category => {
+                category.addEventListener('mouseenter', () => {
+                    const questions = category.getAttribute('data-questions').split(',');
+                    questions.forEach(q => {
+                        const question = document.querySelector(`#${q}`).closest('.question');
+                        question.classList.add('validation-pulse');
+                    });
+                });
+
+                category.addEventListener('mouseleave', () => {
+                    document.querySelectorAll('.question').forEach(q => {
+                        q.classList.remove('validation-pulse');
+                    });
+                });
+            });
+        }
+
         // Update the DOMContentLoaded event listener
         document.addEventListener('DOMContentLoaded', () => {
             initializeStorage();
@@ -1617,6 +1967,20 @@
             setupClearForm();
             
             window.addEventListener('scroll', updateSectionIndicators);
+            initializeValidationStatus();
+            initializeProgressSummary();
+            
+            // Add keyboard navigation for questions
+            document.addEventListener('keydown', (e) => {
+                if (e.key >= '1' && e.key <= '5') {
+                    const focused = document.querySelector('.question:focus-within');
+                    if (focused) {
+                        const options = focused.querySelectorAll('.answer-option');
+                        options[parseInt(e.key) - 1]?.click();
+                    }
+                }
+            });
+            enhanceValidation();
         });
 
         function showClosingScreen(data) {
