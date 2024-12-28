@@ -374,14 +374,16 @@
             border-radius: 8px;
             box-shadow: 0 4px 12px var(--shadow-color);
             z-index: 1000;
-            animation: fadeInOut 0.5s ease-in-out;
+            animation: fadeInOutLonger 2s ease-in-out forwards;
             text-align: center;
             font-weight: bold;
+            opacity: 0;
         }
 
-        @keyframes fadeInOut {
+        @keyframes fadeInOutLonger {
             0% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
-            50% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            10% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
             100% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
         }
 
@@ -1026,10 +1028,10 @@
             popup.textContent = message;
             document.body.appendChild(popup);
 
-            // Remove popup after animation
+            // Remove popup after animation completes (2 seconds)
             setTimeout(() => {
                 popup.remove();
-            }, 500);
+            }, 2000);
         }
 
         // Timer functionality
