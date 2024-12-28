@@ -1,10 +1,227 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Free Will Synthesis Survey - A research survey about beliefs in free will, determinism, and related concepts">
     <title>Free Will Synthesis Survey</title>
+    <style>
+        :root {
+            /* Light theme variables */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --text-primary: #2d3436;
+            --text-secondary: #636e72;
+            --accent-color: #0984e3;
+            --border-color: #dfe6e9;
+            --error-color: #d63031;
+            --success-color: #00b894;
+            --fieldset-bg: #ffffff;
+            --select-bg: #ffffff;
+            --select-border: #b2bec3;
+            --button-bg: #0984e3;
+            --button-text: #ffffff;
+            --button-hover: #0870c0;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] {
+            /* Dark theme variables */
+            --bg-primary: #2d3436;
+            --bg-secondary: #222831;
+            --text-primary: #f5f6fa;
+            --text-secondary: #dcdde1;
+            --accent-color: #00a8ff;
+            --border-color: #4a4f54;
+            --error-color: #ff6b6b;
+            --success-color: #1dd1a1;
+            --fieldset-bg: #353b48;
+            --select-bg: #2d3436;
+            --select-border: #576574;
+            --button-bg: #00a8ff;
+            --button-text: #ffffff;
+            --button-hover: #0097e6;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        header {
+            background-color: var(--bg-secondary);
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 2px 4px var(--shadow-color);
+            position: relative;
+        }
+
+        .theme-switch {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .theme-switch button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            color: var(--text-primary);
+        }
+
+        .theme-switch button:hover {
+            background-color: var(--shadow-color);
+        }
+
+        main {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        fieldset {
+            background-color: var(--fieldset-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 4px var(--shadow-color);
+        }
+
+        legend {
+            color: var(--accent-color);
+            font-weight: bold;
+            padding: 0 0.5rem;
+        }
+
+        .question {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--select-border);
+            border-radius: 4px;
+            background-color: var(--select-bg);
+            color: var(--text-primary);
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(9, 132, 227, 0.2);
+        }
+
+        .form-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--button-hover);
+        }
+
+        button[type="reset"] {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        button[type="reset"]:hover {
+            background-color: var(--border-color);
+        }
+
+        .alert {
+            background-color: var(--error-color);
+            color: white;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+
+        #results {
+            background-color: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-top: 2rem;
+            box-shadow: 0 2px 4px var(--shadow-color);
+        }
+
+        #results h2 {
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+        }
+
+        #results p {
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            background-color: var(--bg-secondary);
+            color: var(--text-secondary);
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 600px) {
+            main {
+                padding: 1rem;
+            }
+            
+            fieldset {
+                padding: 1rem;
+            }
+            
+            .form-controls {
+                flex-direction: column;
+            }
+            
+            .theme-switch {
+                position: static;
+                justify-content: center;
+                margin-top: 1rem;
+            }
+        }
+    </style>
     <link rel="stylesheet" href="styles.css">
     <script src="scripts.js" defer></script>
     <!-- Add debug mode toggle -->
@@ -83,6 +300,25 @@
             logDebug('Results displayed to user');
         }
 
+        // Theme toggle functionality
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            logDebug(`Theme switched to ${newTheme} mode`);
+        }
+
+        // Initialize theme
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            logDebug(`Theme initialized to ${savedTheme} mode`);
+        });
+
         // Initialize debug features when DOM is loaded
         document.addEventListener('DOMContentLoaded', () => {
             logDebug('Survey initialized');
@@ -92,6 +328,11 @@
 </head>
 <body>
     <header>
+        <div class="theme-switch">
+            <button onclick="toggleTheme()" aria-label="Toggle theme">
+                🌓
+            </button>
+        </div>
         <h1>Free Will Synthesis Survey</h1>
         <div id="debug-panel" style="display: none;">
             <p>Debug Mode: Active</p>
