@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Free Will Synthesis Survey - A research survey about beliefs in free will, determinism, and related concepts">
+    <title>Free Will Synthesis Survey</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="scripts.js" defer></script>
+    <!-- Add debug mode toggle -->
+    <script>
+        const DEBUG = false; // Set to true to enable debug mode
+        
+        function logDebug(message) {
+            if (DEBUG) {
+                console.log(`[DEBUG] ${message}`);
+            }
+        }
+
+        function validateForm(event) {
+            event.preventDefault();
+            logDebug('Form submission attempted');
+            
+            const form = document.getElementById('survey-form');
+            const allSelects = form.querySelectorAll('select');
+            let isValid = true;
+            let responses = {};
+
+            allSelects.forEach(select => {
+                if (!select.value) {
+                    isValid = false;
+                    select.classList.add('error');
+                    logDebug(`Question ${select.id} is not answered`);
+                } else {
+                    select.classList.remove('error');
+                    responses[select.id] = parseInt(select.value);
+                }
+            });
+
+            if (isValid) {
+                logDebug('Form is valid. Responses:', responses);
+                calculateScores(responses);
+                return true;
+            } else {
+                document.getElementById('error-message').style.display = 'block';
+                return false;
+            }
+        }
+
+        function calculateScores(responses) {
+            // Calculate subscale scores
+            const freeWillQuestions = ['q4', 'q8', 'q12', 'q16', 'q21', 'q23', 'q26'];
+            const randomnessQuestions = ['q3', 'q7', 'q11', 'q15', 'q19', 'q20'];
+            const determinismQuestions = ['q2', 'q24'];
+            const philosophicalQuestions = ['q1', 'q6'];
+
+            const scores = {
+                freeWill: calculateMean(responses, freeWillQuestions),
+                randomness: calculateMean(responses, randomnessQuestions),
+                determinism: calculateMean(responses, determinismQuestions),
+                philosophical: calculateMean(responses, philosophicalQuestions)
+            };
+
+            logDebug('Calculated scores:', scores);
+            displayResults(scores);
+        }
+
+        function calculateMean(responses, questions) {
+            const sum = questions.reduce((acc, q) => acc + (responses[q] || 0), 0);
+            return (sum / questions.length).toFixed(2);
+        }
+
+        function displayResults(scores) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `
+                <h2>Survey Results</h2>
+                <p>Free Will Score: ${scores.freeWill}</p>
+                <p>Randomness Score: ${scores.randomness}</p>
+                <p>Determinism Score: ${scores.determinism}</p>
+                <p>Philosophical Score: ${scores.philosophical}</p>
+            `;
+            resultsDiv.style.display = 'block';
+            logDebug('Results displayed to user');
+        }
+
+        // Initialize debug features when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            logDebug('Survey initialized');
+            document.getElementById('survey-form').addEventListener('submit', validateForm);
+        });
+    </script>
+</head>
+<body>
+    <header>
+        <h1>Free Will Synthesis Survey</h1>
+        <div id="debug-panel" style="display: none;">
+            <p>Debug Mode: Active</p>
+            <button onclick="console.clear()">Clear Console</button>
+        </div>
+    </header>
+    <main>
+        <section id="instructions" aria-label="Survey Instructions">
+            <p>For each statement below, choose a number from 1 to 5 to indicate how much you agree or disagree:</p>
+            <ul>
+                <li><strong>1</strong> - Strongly Disagree</li>
+                <li><strong>2</strong> - Disagree</li>
+                <li><strong>3</strong> - Neutral</li>
+                <li><strong>4</strong> - Agree</li>
+                <li><strong>5</strong> - Strongly Agree</li>
+            </ul>
+        </section>
+        
+        <div id="error-message" class="alert" style="display: none;" role="alert">
+            Please answer all questions before submitting.
+        </div>
+
+        <form id="survey-form" novalidate>
+            <!-- Group questions by category for better organization -->
+            <fieldset>
+                <legend>Free Will Beliefs</legend>
+                <div class="question">
+                    <label for="q4">4. People have complete control over the decisions they make.</label>
+                    <select id="q4" name="q4" required>
+                        <option value="">Select</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
+                <div class="question">
+                    <label for="q8">8. People must take full responsibility for any bad choices they make.</label>
+                    <select id="q8" name="q8" required>
+                        <option value="">Select</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
+                <div class="question">
+                    <label for="q12">12. People can overcome any obstacles if they truly want to.</label>
+                    <select id="q12" name="q12" required>
+                        <option value="">Select</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
+                <div class="question">
+                    <label for="q16">16. Criminals are totally responsible for the bad things they do.</label>
+                    <select id="q16" name="q16" required>
+                        <option value="">Select</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
+                <div class="question">
+                    <label for="q21">21. People have complete free will.</label>
+                    <select id="q21" name="q21" required>
+                        <option value="">Select</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
+                <div class="question">
+                    <label for="q23">23. People are always at fault for their bad behavior.</label>
+                    <select id="q23" name="q23" required>
+                        <option value="">Select</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
+                <div class="question">
+                    <label for="q26">26. Strength of mind can always overcome the body's desires.</label>
+                    <select id="q26" name="q26" required>
+                        <option value="">Select</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Randomness and Unpredictability</legend>
+                <div class="question">
+                    <label for="q3">3. Chance events seem to be the major cause of human history.</label>
+                    <select id="q3" name="q3" required>
+                        <option value="">Select</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
+                <div class="question">
+                    <label for="q7">7. No one can predict what will happen in this world.</label>
+                    <select id="q7" name="q7" required>
+                        <option value="">Select</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
+                <div class="question">
+                    <label for="q11">11. Life seems unpredictable - just like throwing dice or flipping a coin.</label>
+                    <select id="q11" name="q11" required>
+                        <option value="">Select</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
+                <div class="question">
+                    <label for="q15">15. People are unpredictable.</label>
+                    <select id="q15" name="q15" required>
+                        <option value="">Select</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
+                <div class="question">
+                    <label for="q19">19. Life is hard to predict because it is almost totally random.</label>
+                    <select id="q19" name="q19" required>
+                        <option value="">Select</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
+                <div class="question">
+                    <label for="q20">20. Luck plays a big role in people’s lives.</label>
+                    <select id="q20" name="q20" required>
+                        <option value="">Select</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Determinism</legend>
+                <div class="question">
+                    <label for="q2">2. People’s biological makeup determines their talents and personality.</label>
+                    <select id="q2" name="q2" required>
+                        <option value="">Select</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
+                <div class="question">
+                    <label for="q24">24. Childhood environment will determine your success as an adult.</label>
+                    <select id="q24" name="q24" required>
+                        <option value="">Select</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Philosophical Concepts</legend>
+                <div class="question">
+                    <label for="q1">1. Free will is the ability to make different choices even if everything leading up to one’s choice (e.g., the past, the situation, and their desires, beliefs, etc.) were exactly the same.</label>
+                    <select id="q1" name="q1" required>
+                        <option value="">Select</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
+                <div class="question">
+                    <label for="q6">6. To have free will is to be able to cause things to happen in the world without at the same time being caused to make those things happen.</label>
+                    <select id="q6" name="q6" required>
+                        <option value="">Select</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
+            </fieldset>
+
+            <div class="form-controls">
+                <button type="submit" aria-label="Submit survey responses">Submit Survey</button>
+                <button type="reset" aria-label="Clear all responses">Clear Form</button>
+            </div>
+        </form>
+
+        <div id="results" style="display: none;" aria-live="polite">
+            <!-- Results will be populated by JavaScript -->
+        </div>
+    </main>
+    <footer>
+        <p>Survey based on studies by Paulhus, D.L., & Carey, J. (2010) and others.</p>
+        <p>For research purposes only. All responses are anonymous.</p>
+    </footer>
+</body>
+</html>
