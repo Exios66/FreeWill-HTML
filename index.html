@@ -221,6 +221,27 @@
                 margin-top: 1rem;
             }
         }
+
+        .alert.success {
+            background-color: var(--success-color);
+            color: white;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+
+        .alert.error {
+            background-color: var(--error-color);
+            color: white;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
     </style>
     <link rel="stylesheet" href="styles.css">
     <script src="scripts.js" defer></script>
@@ -265,39 +286,158 @@
         }
 
         function calculateScores(responses) {
-            // Calculate subscale scores
-            const freeWillQuestions = ['q4', 'q8', 'q12', 'q16', 'q21', 'q23', 'q26'];
-            const randomnessQuestions = ['q3', 'q7', 'q11', 'q15', 'q19', 'q20'];
-            const determinismQuestions = ['q2', 'q24'];
-            const philosophicalQuestions = ['q1', 'q6'];
+            // Updated question groupings with all questions
+            const subscales = {
+                freeWill: ['q4', 'q8', 'q12', 'q16', 'q21', 'q23', 'q26'],
+                randomness: ['q3', 'q7', 'q11', 'q15', 'q19', 'q20'],
+                determinism: ['q2', 'q24'],
+                philosophical: ['q1', 'q6']
+            };
 
-            const scores = {
-                freeWill: calculateMean(responses, freeWillQuestions),
-                randomness: calculateMean(responses, randomnessQuestions),
-                determinism: calculateMean(responses, determinismQuestions),
-                philosophical: calculateMean(responses, philosophicalQuestions)
+            const scores = {};
+            for (const [scale, questions] of Object.entries(subscales)) {
+                scores[scale] = calculateMean(responses, questions);
+            }
+
+            // Calculate interpretations based on scores
+            const interpretations = {
+                freeWill: interpretFreeWillScore(scores.freeWill),
+                randomness: interpretRandomnessScore(scores.randomness),
+                determinism: interpretDeterminismScore(scores.determinism),
+                philosophical: interpretPhilosophicalScore(scores.philosophical)
             };
 
             logDebug('Calculated scores:', scores);
-            displayResults(scores);
+            
+            const surveyData = {
+                responses: responses,
+                scores: scores,
+                interpretations: interpretations,
+                metadata: {
+                    timestamp: new Date().toISOString(),
+                    userAgent: navigator.userAgent,
+                    language: navigator.language
+                }
+            };
+
+            submitToBackend(surveyData);
+        }
+
+        function interpretFreeWillScore(score) {
+            if (score >= 4) return "Strong belief in free will";
+            if (score >= 3) return "Moderate belief in free will";
+            return "Limited belief in free will";
+        }
+
+        function interpretRandomnessScore(score) {
+            if (score >= 4) return "Strong belief in randomness";
+            if (score >= 3) return "Moderate belief in randomness";
+            return "Limited belief in randomness";
+        }
+
+        function interpretDeterminismScore(score) {
+            if (score >= 4) return "Strong belief in determinism";
+            if (score >= 3) return "Moderate belief in determinism";
+            return "Limited belief in determinism";
+        }
+
+        function interpretPhilosophicalScore(score) {
+            if (score >= 4) return "Strong philosophical understanding";
+            if (score >= 3) return "Moderate philosophical understanding";
+            return "Basic philosophical understanding";
+        }
+
+        function displayResults(scores, interpretations) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `
+                <h2>Survey Results</h2>
+                <div class="score-section">
+                    <h3>Free Will</h3>
+                    <p>Score: ${scores.freeWill}</p>
+                    <p>Interpretation: ${interpretations.freeWill}</p>
+                </div>
+                <div class="score-section">
+                    <h3>Randomness</h3>
+                    <p>Score: ${scores.randomness}</p>
+                    <p>Interpretation: ${interpretations.randomness}</p>
+                </div>
+                <div class="score-section">
+                    <h3>Determinism</h3>
+                    <p>Score: ${scores.determinism}</p>
+                    <p>Interpretation: ${interpretations.determinism}</p>
+                </div>
+                <div class="score-section">
+                    <h3>Philosophical Understanding</h3>
+                    <p>Score: ${scores.philosophical}</p>
+                    <p>Interpretation: ${interpretations.philosophical}</p>
+                </div>
+            `;
+            resultsDiv.style.display = 'block';
+            
+            // Scroll to results
+            resultsDiv.scrollIntoView({ behavior: 'smooth' });
+            logDebug('Results displayed to user');
+        }
+
+        async function submitToBackend(data) {
+            try {
+                // Show loading state
+                const submitButton = document.querySelector('button[type="submit"]');
+                submitButton.disabled = true;
+                submitButton.textContent = 'Submitting...';
+
+                const response = await fetch('/api/survey/submit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                logDebug('Survey submitted successfully:', result);
+                
+                // Display results to user
+                displayResults(data.scores, data.interpretations);
+                
+                // Show success message
+                showAlert('Survey submitted successfully! Thank you for participating.', 'success');
+                
+                // Disable form submission
+                document.getElementById('survey-form').querySelector('button[type="submit"]').disabled = true;
+
+            } catch (error) {
+                logDebug('Error submitting survey:', error);
+                showAlert('There was an error submitting your survey. Please try again later.', 'error');
+                submitButton.disabled = false;
+                submitButton.textContent = 'Submit Survey';
+            }
+        }
+
+        function showAlert(message, type = 'error') {
+            // Remove any existing alerts
+            const existingAlerts = document.querySelectorAll('.alert');
+            existingAlerts.forEach(alert => alert.remove());
+
+            // Create and show new alert
+            const alert = document.createElement('div');
+            alert.className = `alert ${type}`;
+            alert.textContent = message;
+            document.getElementById('survey-form').insertAdjacentElement('beforebegin', alert);
+
+            // Auto-hide alert after 5 seconds
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
         }
 
         function calculateMean(responses, questions) {
             const sum = questions.reduce((acc, q) => acc + (responses[q] || 0), 0);
             return (sum / questions.length).toFixed(2);
-        }
-
-        function displayResults(scores) {
-            const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = `
-                <h2>Survey Results</h2>
-                <p>Free Will Score: ${scores.freeWill}</p>
-                <p>Randomness Score: ${scores.randomness}</p>
-                <p>Determinism Score: ${scores.determinism}</p>
-                <p>Philosophical Score: ${scores.philosophical}</p>
-            `;
-            resultsDiv.style.display = 'block';
-            logDebug('Results displayed to user');
         }
 
         // Theme toggle functionality
@@ -329,7 +469,7 @@
 <body>
     <header>
         <div class="theme-switch">
-            <button onclick="toggleTheme()" aria-label="Toggle theme">
+            <button type="button" onclick="toggleTheme()" aria-label="Toggle theme">
                 🌓
             </button>
         </div>
