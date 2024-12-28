@@ -643,6 +643,175 @@
                 display: none;
             }
         }
+
+        .confirm-dialog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .confirm-content {
+            background: var(--bg-secondary);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px var(--shadow-color);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .confirm-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1.5rem;
+        }
+
+        .confirm-yes, .confirm-no {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .confirm-yes {
+            background-color: var(--error-color);
+            color: white;
+        }
+
+        .confirm-no {
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .confirm-yes:hover, .confirm-no:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px var(--shadow-color);
+        }
+
+        .closing-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        .closing-content {
+            text-align: center;
+            max-width: 600px;
+            padding: 3rem;
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            box-shadow: 0 8px 32px var(--shadow-color);
+            transform: translateY(20px);
+            animation: slideUp 0.5s ease-out forwards;
+        }
+
+        .closing-content h2 {
+            color: var(--accent-color);
+            margin-bottom: 1.5rem;
+            font-size: 2rem;
+        }
+
+        .closing-content p {
+            margin-bottom: 1rem;
+            line-height: 1.6;
+            color: var(--text-primary);
+        }
+
+        .closing-actions {
+            margin-top: 2rem;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .closing-button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 1rem;
+        }
+
+        .closing-button.primary {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .closing-button.secondary {
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .closing-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px var(--shadow-color);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .question.unanswered {
+            animation: shake 0.5s ease-in-out;
+            border-left: 3px solid var(--error-color);
+            padding-left: 1rem;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .error-summary {
+            background-color: var(--error-color);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+        }
+
+        .error-summary.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .error-summary i {
+            font-size: 1.5rem;
+        }
     </style>
     <link rel="stylesheet" href="styles.css">
     <script src="scripts.js" defer></script>
@@ -661,30 +830,78 @@
             logDebug('Form submission attempted');
             
             const form = document.getElementById('survey-form');
-            const allSelects = form.querySelectorAll('select');
-            let isValid = true;
-            let responses = {};
+            const questions = form.querySelectorAll('.question');
+            let unansweredQuestions = [];
 
-            allSelects.forEach(select => {
-                if (!select.value) {
-                    isValid = false;
-                    select.classList.add('error');
-                    logDebug(`Question ${select.id} is not answered`);
-                } else {
-                    select.classList.remove('error');
-                    responses[select.id] = parseInt(select.value);
+            // Remove previous error states
+            questions.forEach(question => {
+                question.classList.remove('unanswered');
+            });
+
+            // Check each question
+            questions.forEach(question => {
+                const answerGrid = question.querySelector('.answer-grid');
+                const hasAnswer = answerGrid.querySelector('.answer-option.selected');
+                
+                if (!hasAnswer) {
+                    unansweredQuestions.push(question);
+                    question.classList.add('unanswered');
                 }
             });
 
-            if (isValid) {
-                logDebug('Form is valid. Responses:', responses);
-                calculateScores(responses);
-                return true;
-            } else {
-                showPopupAlert('Please answer all questions before submitting');
-                document.getElementById('error-message').style.display = 'block';
+            if (unansweredQuestions.length > 0) {
+                // Show error message
+                showValidationError(unansweredQuestions.length);
+                
+                // Scroll to first unanswered question
+                unansweredQuestions[0].scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
+                });
+
                 return false;
             }
+
+            // Collect responses if all questions are answered
+            const responses = {};
+            questions.forEach(question => {
+                const questionId = question.querySelector('.answer-grid').getAttribute('data-question-id');
+                const selectedOption = question.querySelector('.answer-option.selected');
+                responses[questionId] = parseInt(selectedOption.getAttribute('data-value'));
+            });
+
+            logDebug('Form is valid. Responses:', responses);
+            calculateScores(responses);
+            return true;
+        }
+
+        function showValidationError(count) {
+            // Remove any existing error summaries
+            const existingError = document.querySelector('.error-summary');
+            if (existingError) {
+                existingError.remove();
+            }
+
+            // Create new error summary
+            const errorSummary = document.createElement('div');
+            errorSummary.className = 'error-summary';
+            errorSummary.innerHTML = `
+                <i class="fas fa-exclamation-circle"></i>
+                <div>
+                    <h4>Incomplete Survey</h4>
+                    <p>Please answer ${count} remaining question${count > 1 ? 's' : ''} before submitting.</p>
+                </div>
+            `;
+
+            // Insert error summary at the top of the form
+            const form = document.getElementById('survey-form');
+            form.insertBefore(errorSummary, form.firstChild);
+
+            // Trigger animation
+            setTimeout(() => errorSummary.classList.add('show'), 10);
+
+            // Show popup alert
+            showPopupAlert(`Please complete all ${count} remaining question${count > 1 ? 's' : ''}`);
         }
 
         function calculateScores(responses) {
@@ -931,23 +1148,17 @@
                     throw new Error('Failed to save response');
                 }
 
-                // Display results to user
+                // Display results
                 displayResults(data.scores, data.interpretations);
                 
-                // Show success message
-                showAlert('Survey submitted successfully! Thank you for participating.', 'success');
-                
-                // Disable form submission
-                document.getElementById('survey-form').querySelector('button[type="submit"]').disabled = true;
-
-                // Add download button for individual response
-                addDownloadButton(data);
+                // Show closing screen after a brief delay
+                setTimeout(() => {
+                    showClosingScreen(data);
+                }, 1500);
 
             } catch (error) {
                 logDebug('Error submitting survey:', error);
                 showAlert('There was an error submitting your survey. Please try again later.', 'error');
-                submitButton.disabled = false;
-                submitButton.textContent = 'Submit Survey';
             }
         }
 
@@ -1074,6 +1285,7 @@
                 // Create answer grid
                 const answerGrid = document.createElement('div');
                 answerGrid.className = 'answer-grid';
+                answerGrid.setAttribute('data-question-id', answerId);
                 
                 // Create answer options
                 for (let i = 1; i <= 5; i++) {
@@ -1283,6 +1495,116 @@
             document.body.appendChild(help);
         }
 
+        function setupClearForm() {
+            const resetButton = document.querySelector('button[type="reset"]');
+            resetButton.addEventListener('click', (e) => {
+                e.preventDefault(); // Prevent default reset behavior
+                showConfirmDialog('Are you sure you want to clear all responses?', clearFormCompletely);
+            });
+        }
+
+        function showConfirmDialog(message, onConfirm) {
+            const dialog = document.createElement('div');
+            dialog.className = 'confirm-dialog';
+            dialog.innerHTML = `
+                <div class="confirm-content">
+                    <p>${message}</p>
+                    <div class="confirm-actions">
+                        <button class="confirm-yes">Yes, Clear All</button>
+                        <button class="confirm-no">Cancel</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(dialog);
+            
+            // Add event listeners
+            dialog.querySelector('.confirm-yes').onclick = () => {
+                onConfirm();
+                dialog.remove();
+            };
+            dialog.querySelector('.confirm-no').onclick = () => dialog.remove();
+        }
+
+        function clearFormCompletely() {
+            // Reset all answer selections
+            document.querySelectorAll('.answer-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+
+            // Remove answered class from questions
+            document.querySelectorAll('.question').forEach(question => {
+                question.classList.remove('answered');
+                question.classList.remove('highlight');
+            });
+
+            // Reset progress indicators
+            document.querySelectorAll('.progress-dot').forEach(dot => {
+                dot.classList.remove('active');
+            });
+
+            // Reset progress bar
+            const progressBar = document.querySelector('.progress-bar');
+            if (progressBar) {
+                progressBar.style.width = '0%';
+            }
+
+            // Reset fieldset progress
+            document.querySelectorAll('.fieldset-progress').forEach(progress => {
+                const total = progress.closest('fieldset').querySelectorAll('.question').length;
+                progress.querySelector('.progress-indicator span').textContent = `0/${total}`;
+            });
+
+            // Clear stored responses
+            localStorage.removeItem('current_responses');
+
+            // Reset timer if needed
+            resetTimer();
+
+            // Clear any error messages
+            const errorMessage = document.getElementById('error-message');
+            if (errorMessage) {
+                errorMessage.style.display = 'none';
+            }
+
+            // Remove any existing alerts
+            document.querySelectorAll('.alert').forEach(alert => alert.remove());
+
+            // Show success message
+            showPopupAlert('Form cleared successfully', 'success');
+
+            // Re-enable submit button if it was disabled
+            const submitButton = document.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Submit Survey';
+            }
+
+            // Hide results section if visible
+            const results = document.getElementById('results');
+            if (results) {
+                results.style.display = 'none';
+            }
+
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetTimer() {
+            // Clear existing timer
+            clearInterval(timerInterval);
+            
+            // Reset and restart timer
+            startTime = new Date();
+            timerInterval = setInterval(updateTimer, 1000);
+            
+            // Update timer display
+            const timerElement = document.getElementById('survey-timer');
+            if (timerElement) {
+                timerElement.textContent = 'Time: 00:00';
+            }
+        }
+
         // Update the DOMContentLoaded event listener
         document.addEventListener('DOMContentLoaded', () => {
             initializeStorage();
@@ -1292,9 +1614,41 @@
             createSectionIndicators();
             setupKeyboardShortcuts();
             addFloatingHelp();
+            setupClearForm();
             
             window.addEventListener('scroll', updateSectionIndicators);
         });
+
+        function showClosingScreen(data) {
+            const overlay = document.createElement('div');
+            overlay.className = 'closing-overlay';
+            overlay.innerHTML = `
+                <div class="closing-content">
+                    <h2>Thank You for Participating!</h2>
+                    <p>Your response has been successfully recorded and saved to your downloads folder.</p>
+                    <p>Your insights will help us better understand perspectives on free will, determinism, and human agency.</p>
+                    <p>The data has been exported in both CSV and JSON formats for your reference.</p>
+                    <div class="download-info">
+                        <p><i class="fas fa-folder-open"></i> Check your downloads folder for:</p>
+                        <ul style="list-style: none; margin: 1rem 0;">
+                            <li><i class="fas fa-file-csv"></i> survey_responses_${new Date().toISOString().split('T')[0]}.csv</li>
+                            <li><i class="fas fa-file-code"></i> survey_response_${new Date().toISOString().split('T')[0]}.json</li>
+                        </ul>
+                    </div>
+                    <p>Have questions or want to learn more?</p>
+                    <div class="closing-actions">
+                        <a href="https://github.com/Exios66" target="_blank" rel="noopener noreferrer" class="closing-button primary">
+                            <i class="fab fa-github"></i> Contact on GitHub
+                        </a>
+                        <button onclick="window.location.reload()" class="closing-button secondary">
+                            <i class="fas fa-redo"></i> Take Survey Again
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+        }
     </script>
     <!-- Add Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -1541,7 +1895,52 @@
         </form>
 
         <div id="results" style="display: none;" aria-live="polite">
-            <!-- Results will be populated by JavaScript -->
+            <div class="results-container">
+                <div class="results-header">
+                    <h2>Your Survey Results</h2>
+                    <p class="results-timestamp"></p>
+                </div>
+                
+                <div class="results-grid">
+                    <div class="result-card" id="free-will-result">
+                        <h3>Free Will</h3>
+                        <div class="score"></div>
+                        <div class="interpretation"></div>
+                    </div>
+                    
+                    <div class="result-card" id="determinism-result">
+                        <h3>Determinism</h3>
+                        <div class="score"></div>
+                        <div class="interpretation"></div>
+                    </div>
+                    
+                    <div class="result-card" id="randomness-result">
+                        <h3>Randomness</h3>
+                        <div class="score"></div>
+                        <div class="interpretation"></div>
+                    </div>
+                    
+                    <div class="result-card" id="philosophical-result">
+                        <h3>Philosophical Understanding</h3>
+                        <div class="score"></div>
+                        <div class="interpretation"></div>
+                    </div>
+                </div>
+
+                <div class="results-actions">
+                    <button id="download-results" class="action-button">
+                        Download Results
+                    </button>
+                    <button id="share-results" class="action-button">
+                        Share Results
+                    </button>
+                </div>
+
+                <div class="results-summary">
+                    <h3>Summary</h3>
+                    <p id="results-summary-text"></p>
+                </div>
+            </div>
         </div>
     </main>
     <footer class="modern-footer">
