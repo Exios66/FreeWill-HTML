@@ -903,21 +903,40 @@
             left: 50%;
             transform: translateX(-50%);
             background: var(--bg-secondary);
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
+            padding: 0.75rem 1.5rem;
+            border-radius: 24px;
             box-shadow: 0 2px 8px var(--shadow-color);
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 1.5rem;
             z-index: 98;
+            transition: all 0.3s ease;
         }
 
-        .progress-pill {
-            padding: 0.25rem 0.75rem;
+        .progress-summary .progress-pill {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 1rem;
             border-radius: 15px;
-            font-size: 0.9rem;
             background: var(--bg-primary);
+            font-size: 0.9rem;
             color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .progress-summary .progress-pill i {
+            font-size: 1rem;
+        }
+
+        .progress-summary.progress-update {
+            animation: progressPulse 0.3s ease;
+        }
+
+        @keyframes progressPulse {
+            0% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.05); }
+            100% { transform: translateX(-50%) scale(1); }
         }
 
         .validation-badge {
@@ -1448,12 +1467,33 @@
 
         function startTimer() {
             startTime = new Date();
+            
+            // Create timer element
             const timerElement = document.createElement('div');
             timerElement.className = 'timer';
             timerElement.id = 'survey-timer';
             document.body.appendChild(timerElement);
 
+            // Initialize progress summary if not exists
+            if (!document.querySelector('.progress-summary')) {
+                const summary = document.createElement('div');
+                summary.className = 'progress-summary';
+                summary.innerHTML = `
+                    <div class="progress-pill">
+                        <i class="fas fa-tasks"></i>
+                        <span class="progress-count">0/17</span>
+                    </div>
+                    <div class="progress-pill">
+                        <i class="fas fa-clock"></i>
+                        <span class="elapsed-time">00:00</span>
+                    </div>
+                `;
+                document.body.appendChild(summary);
+            }
+
+            // Start timer interval
             timerInterval = setInterval(updateTimer, 1000);
+            updateProgressSummary(); // Initial progress update
         }
 
         function updateTimer() {
@@ -1462,9 +1502,16 @@
             const minutes = elapsedTime.getMinutes().toString().padStart(2, '0');
             const seconds = elapsedTime.getSeconds().toString().padStart(2, '0');
             
+            // Update timer in header
             const timerElement = document.getElementById('survey-timer');
             if (timerElement) {
                 timerElement.textContent = `Time: ${minutes}:${seconds}`;
+            }
+
+            // Update elapsed time in progress summary
+            const elapsedTimeElement = document.querySelector('.progress-summary .elapsed-time');
+            if (elapsedTimeElement) {
+                elapsedTimeElement.textContent = `${minutes}:${seconds}`;
             }
         }
 
@@ -1536,7 +1583,8 @@
             
             // Update progress
             updateProgress();
-
+            updateProgressSummary(); // Add this line to update the progress bubble
+            
             // Add error pulse to unanswered questions
             document.querySelectorAll('.question:not(.answered)').forEach(q => {
                 q.classList.add('error-pulse');
@@ -1890,28 +1938,36 @@
             updateProgressSummary();
         }
 
-        function initializeProgressSummary() {
-            const summary = document.createElement('div');
-            summary.className = 'progress-summary';
-            summary.innerHTML = `
-                <div class="progress-pill">
-                    <i class="fas fa-tasks"></i>
-                    <span class="progress-count">0/17</span>
-                </div>
-                <div class="progress-pill">
-                    <i class="fas fa-clock"></i>
-                    <span class="elapsed-time">00:00</span>
-                </div>
-            `;
-            document.body.appendChild(summary);
-        }
-
         function updateProgressSummary() {
+            const totalQuestions = 17; // Total number of questions in the survey
             const responses = getStoredResponses();
             const answered = Object.keys(responses).length;
-            const progressCount = document.querySelector('.progress-count');
+            
+            // Update progress count in summary bubble
+            const progressCount = document.querySelector('.progress-summary .progress-count');
             if (progressCount) {
-                progressCount.textContent = `${answered}/17`;
+                progressCount.textContent = `${answered}/${totalQuestions}`;
+            }
+
+            // Add progress percentage and update bubble style
+            const progressPercentage = (answered / totalQuestions) * 100;
+            const progressSummary = document.querySelector('.progress-summary');
+            if (progressSummary) {
+                // Update progress indicator color based on completion
+                if (progressPercentage === 100) {
+                    progressSummary.style.backgroundColor = 'var(--success-color)';
+                    progressSummary.style.color = 'white';
+                } else if (progressPercentage >= 50) {
+                    progressSummary.style.backgroundColor = 'var(--accent-color)';
+                    progressSummary.style.color = 'white';
+                } else {
+                    progressSummary.style.backgroundColor = 'var(--bg-secondary)';
+                    progressSummary.style.color = 'var(--text-primary)';
+                }
+
+                // Add subtle animation on progress update
+                progressSummary.classList.add('progress-update');
+                setTimeout(() => progressSummary.classList.remove('progress-update'), 300);
             }
         }
 
