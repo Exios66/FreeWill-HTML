@@ -5,6 +5,7 @@ A comprehensive web-based survey application for conducting free will belief ass
 ## Overview
 
 This application provides a modern, responsive web interface for conducting surveys related to free will beliefs. It includes:
+
 - A dynamic HTML-based survey interface
 - RESTful API backend for data collection
 - Automatic data storage in both SQLite and CSV formats
@@ -12,6 +13,7 @@ This application provides a modern, responsive web interface for conducting surv
 - Cross-platform compatibility
 
 ## Table of Contents
+
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Project Structure](#project-structure)
@@ -32,23 +34,27 @@ This application provides a modern, responsive web interface for conducting surv
 ## Installation
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/yourusername/FreeWill-HTML.git
 cd FreeWill-HTML
 ```
 
 2. Create and activate a virtual environment (recommended):
+
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Windows, use: venv\Scripts\activate
 ```
 
 3. Install dependencies:
+
 ```bash
 pip install -r requirements.txt
 ```
 
 4. Initialize the database:
+
 ```bash
 python init_db.py
 ```
@@ -79,11 +85,13 @@ The application uses several configuration settings that can be modified:
 ## Usage
 
 1. Start the server:
+
 ```bash
 python main.py
 ```
 
 2. Access the application:
+
 - Web interface: `http://localhost:8000`
 - API documentation: `http://localhost:8000/docs`
 
@@ -92,9 +100,11 @@ python main.py
 ### Endpoints
 
 #### POST /api/survey/submit
+
 Submit a new survey response.
 
 Request body:
+
 ```json
 {
     "responses": {
@@ -113,9 +123,11 @@ Request body:
 ```
 
 #### GET /api/survey/stats
+
 Retrieve survey statistics.
 
 Response:
+
 ```json
 {
     "total_responses": integer,
@@ -147,6 +159,7 @@ CREATE TABLE responses (
 ### CSV Export
 
 The application automatically maintains a CSV export (`data/survey_responses.csv`) with the following columns:
+
 - id
 - timestamp
 - response_* (question responses)
@@ -184,6 +197,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Future Expansion
 
 ### Planned Features
+
 - User authentication system
 - Advanced analytics dashboard
 - Multiple survey templates
@@ -191,6 +205,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Export to additional formats
 
 ### Technical Roadmap
+
 1. Implement user authentication
 2. Add database migrations
 3. Create admin interface
@@ -199,6 +214,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 6. Implement caching
 
 ### Integration Possibilities
+
 - LMS (Learning Management Systems)
 - Research platforms
 - Data analysis tools
