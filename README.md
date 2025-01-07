@@ -71,7 +71,7 @@ python init_db.py
 
 ## Project Structure
 
-```
+```bash
 FreeWill-HTML/
 ├── main.py              # FastAPI application server
 ├── init_db.py           # Database initialization script
