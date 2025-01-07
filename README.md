@@ -6,10 +6,12 @@ A comprehensive web-based survey application for conducting free will belief ass
 
 This application provides a modern, responsive web interface for conducting surveys related to free will beliefs. It includes:
 
-- A dynamic HTML-based survey interface
-- RESTful API backend for data collection
+- A dynamic HTML-based survey interface with dark/light mode
+- RESTful API backend with FastAPI
+- Robust database management with SQLite
 - Automatic data storage in both SQLite and CSV formats
 - Real-time statistics calculation
+- Automated backup system
 - Cross-platform compatibility
 
 ## Table of Contents
@@ -17,6 +19,7 @@ This application provides a modern, responsive web interface for conducting surv
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Project Structure](#project-structure)
+- [Features](#features)
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [API Documentation](#api-documentation)
@@ -30,6 +33,13 @@ This application provides a modern, responsive web interface for conducting surv
 - Python 3.8 or higher
 - pip (Python package manager)
 - Git (for version control)
+- Required Python packages (see requirements.txt):
+  - FastAPI
+  - uvicorn
+  - pydantic
+  - pandas
+  - sqlite3
+  - python-multipart
 
 ## Installation
 
@@ -65,22 +75,76 @@ python init_db.py
 FreeWill-HTML/
 ├── main.py              # FastAPI application server
 ├── init_db.py           # Database initialization script
+├── db_utils.py          # Database management utilities
 ├── index.html           # Main survey interface
 ├── requirements.txt     # Python dependencies
 ├── data/               # Data directory (created on init)
 │   ├── survey_responses.db  # SQLite database
-│   └── survey_responses.csv # CSV export of responses
-└── README.md           # This documentation
+│   ├── survey_responses.csv # CSV export of responses
+│   └── backups/        # Automated backups directory
+└── README.md           # Documentation
 ```
+
+## Features
+
+### Survey Interface
+
+- Modern, responsive design
+- Dark/light theme support
+- Real-time form validation
+- Progress tracking
+- Keyboard shortcuts
+- Accessibility features
+- Mobile-friendly layout
+
+### Backend Features
+
+- RESTful API with FastAPI
+- Automated database management
+- Real-time data validation
+- Comprehensive error handling
+- Detailed logging system
+- Automatic data backups
+- CSV export functionality
+
+### Database Features
+
+- Robust SQLite database
+- Automated backups
+- CSV export with backup system
+- Data versioning
+- Timestamp tracking
+- Efficient indexing
+- Transaction support
+
+### Security Features
+
+- CORS protection
+- Input validation
+- Error handling
+- Secure data storage
+- Backup management
 
 ## Configuration
 
 The application uses several configuration settings that can be modified:
 
+### Database Settings
+
 - Database location: `data/survey_responses.db`
 - CSV export location: `data/survey_responses.csv`
-- Server host: `0.0.0.0` (default)
-- Server port: `8000` (default)
+- Backup directory: `data/backups/`
+
+### Server Settings
+
+- Host: `0.0.0.0` (default)
+- Port: `8000` (default)
+- CORS settings in `main.py`
+
+### Logging Configuration
+
+- Level: INFO (default)
+- Format: Configurable in `db_utils.py`
 
 ## Usage
 
@@ -135,15 +199,27 @@ Response:
         "category": float,
         ...
     },
-    "latest_response": timestamp
+    "latest_response": timestamp,
+    "responses_by_date": {
+        "date": count,
+        ...
+    }
 }
 ```
+
+#### GET /api/survey/response/{response_id}
+
+Retrieve a specific response.
+
+#### POST /api/survey/backup
+
+Create a database backup.
 
 ## Data Storage
 
 ### Database Schema
 
-The SQLite database (`data/survey_responses.db`) contains the following structure:
+The SQLite database includes:
 
 ```sql
 CREATE TABLE responses (
@@ -152,19 +228,36 @@ CREATE TABLE responses (
     responses TEXT NOT NULL,
     scores TEXT NOT NULL,
     metadata TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    version INTEGER DEFAULT 1
 );
+
+-- Indices for performance
+CREATE INDEX idx_timestamp ON responses(timestamp);
+CREATE INDEX idx_created_at ON responses(created_at);
+
+-- Trigger for timestamp updates
+CREATE TRIGGER update_responses_timestamp 
+AFTER UPDATE ON responses
+BEGIN
+    UPDATE responses SET updated_at = DATETIME('now') 
+    WHERE id = NEW.id;
+END;
 ```
 
-### CSV Export
+### CSV Export Format
 
-The application automatically maintains a CSV export (`data/survey_responses.csv`) with the following columns:
+The application maintains a CSV export with:
 
 - id
 - timestamp
 - response_* (question responses)
 - score_* (category scores)
 - metadata_* (additional information)
+- created_at
+- updated_at
+- version
 
 ## Development
 
@@ -177,8 +270,15 @@ The application automatically maintains a CSV export (`data/survey_responses.csv
 ### Modifying Data Collection
 
 1. Update the `SurveyData` model in `main.py`
-2. Modify the database schema in `init_db.py`
-3. Update the CSV export function in `main.py`
+2. Modify the database schema in `db_utils.py`
+3. Update the CSV export function in `db_utils.py`
+
+### Database Management
+
+1. Use `DatabaseManager` class in `db_utils.py`
+2. Implement proper error handling
+3. Maintain data consistency
+4. Handle backups appropriately
 
 ## Contributing
 
